@@ -35,7 +35,8 @@ ab_default = None
 result_default = None
 
 if use_prior_example_file:
-    prior_file = "../data/prior_data.csv"
+  
+    prior_file = "./data/prior_data.csv"
     ab_default = ['group']
     result_default = ['converted']
 
@@ -98,7 +99,8 @@ if prior_file:
     )
 
     if use_posterior_example_file:
-        posterior_file = "../data/experiment_data.csv"
+
+        posterior_file = "./data/experiment_data.csv"
         ab_default = ['group']
         result_default = ['converted']
 
