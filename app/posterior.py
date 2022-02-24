@@ -49,11 +49,13 @@ def posterior_plot(x, y1, y2):
         width = 800,
         height = 600,
         title="Conversion Probability",
-        xaxis_title="Experiment Posteriors",
-        yaxis_title="Density",
+        xaxis_title="Conversion Rate",
+        # yaxis_title="Density",
         showlegend= True,
     #     yaxis_range=[-4,4],
         xaxis_range=[0.26, 0.42]
     )
+
+    fig.update_yaxes(visible = False)
 
     return fig
