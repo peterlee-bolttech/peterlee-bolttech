@@ -17,208 +17,142 @@ st.set_page_config(layout="centered") # or 'wide'
 # insert bolttech logo with link
 st.markdown("[![Foo](https://www.datocms-assets.com/24091/1590561811-bolttech-logo.svg)](http://bolttech.io/)")
 
+bolttech_colors = {
+'white': '#FFFFFF',
+'black': '#000000',
+'blue_dark': '#160E45',
+'cyan_dark': '#00B9C7',
+'cyan_medium': '#66D6DD',
+'cyan_light': '#CCF1F3',
+'yellow_dark': '#E2D900',
+'yellow_light': '#F9F7CC',
+'grey_dark': '#746F95',
+'grey_light': '#D1CFDC'
+}
+
 # Top text area
 with st.container():
-    # st.title("How does sample size affect the experiment? How to compute appropriate sample size")
-    st.header("Bayesian AB Testing Tool: Binary Outcome 📊")
-    st.subheader("""Bayesian A/B Testing: Update prior beleif having new information, come up with posterior belief""")
-
-
-###### File upload ######
-
-prior_file = st.file_uploader("Upload Prior CSV", type=".csv")
-use_prior_example_file = st.checkbox(
-    "Use example file", False, help="Use in-built example prior file to demo the app"
-)
+    st.header("A/B Testing Tool 📊")
 
 ab_default = None
 result_default = None
 
-if use_prior_example_file:
-    prior_file = "./data/prior_data.csv"
+x = np.linspace(0, 1, 1000)
+
+posterior_file = st.file_uploader("Upload Posterior CSV", type=".csv")
+use_posterior_example_file = st.checkbox(
+    "Use example file", False, help="Use in-built example posterior file to demo the app"
+)
+
+if use_posterior_example_file:
+    posterior_file = "./data/experiment_data.csv"
     ab_default = ['group']
     result_default = ['converted']
 
-if prior_file:
-    prior_data = pd.read_csv(prior_file)
+if posterior_file:
+    experiment_data = pd.read_csv(posterior_file)
 
-    st.markdown("### Data preview")
-    st.dataframe(prior_data.head())
+    st.markdown("### Experiment Result Data preview")
+    st.dataframe(experiment_data.head())
 
-    st.markdown("## Select target column to compute prior belief")
-    with st.form(key="my_form1"):
-        result_prior = st.multiselect(
+    st.markdown("### Select columns for analysis")
+
+    with st.form(key="my_form"):
+        ab = st.multiselect(
+            "A/B column",
+            options=experiment_data.columns,
+            help="Select which column refers to your control/test testing labels.",
+            default=ab_default,
+        )
+        if ab:
+            control = experiment_data[ab[0]].unique()[0]
+            test = experiment_data[ab[0]].unique()[1]
+            decide = st.radio(
+                f"Is *{test}* Group B?",
+                options=["Yes", "No"],
+                help="Select yes if this is group B (or the test group) from your test.",
+            )
+            if decide == "No":
+                control, test = test, control
+            visitors_a = experiment_data[ab[0]].value_counts()[control]
+            visitors_b = experiment_data[ab[0]].value_counts()[test]
+
+        result = st.multiselect(
             "Result column",
-            options = prior_data.columns,
-            help = "Select which column shows the result of the test.",
-            default = result_default,
+            options=experiment_data.columns,
+            help="Select which column shows the result of the test.",
+            default=result_default,
         )
 
-        if result_prior:
-            conversion_rate = prior_data['converted'].sum()/prior_data.shape[0]
+        if result:
+            conversions_a = (
+                experiment_data[[ab[0], result[0]]].groupby(ab[0]).agg("sum")[result[0]][control]
+            )
+            conversions_b = (
+                experiment_data[[ab[0], result[0]]].groupby(ab[0]).agg("sum")[result[0]][test]
+            )
 
-        submit_button = st.form_submit_button(label = "Submit")
+        submit_button = st.form_submit_button(label="Submit")
 
-    if not result_prior:
-        st.warning("Please select **target column to indicate conversion records")
+    if not ab or not result:
+        st.warning("Please select both an **A/B column** and a **Result column**.")
         st.stop()
 
+
     name = (
-        "prior_data.csv" if isinstance(prior_file, str) else prior_file.name
+    "./data/experiment_data.csv" if isinstance(posterior_file, str) else posterior_file.name
     )
 
-    # Prior stage - calculate prior conversion_rate and beta
-    conversion_rate = prior_data['converted'].sum()/prior_data.shape[0]
+    results = experiment_data.groupby('group').agg({'userId': pd.Series.nunique, 'converted': sum})
+    results.rename({'userId': 'sampleSize'}, axis=1, inplace=True)
+    results['conversionRate'] = results['converted']/results['sampleSize']
+
+    conversion_rate = results.loc['control']['conversionRate']
     prior_alpha = round(conversion_rate, 1)*20 + 1
     prior_beta = 20 + 1 - round(conversion_rate, 1)*20
-    prior = beta(prior_alpha, prior_beta)
 
-    prior_summary = pd.DataFrame(
-        index = ["Conversion Rate",
-        "Prior Alpha",
-        "Prior Beta"],
-        columns = ["Prior Belief"],
-        data = [str(round(conversion_rate, 4) * 100)+' %', round(prior_alpha, 2), round(prior_beta, 2)]
-    ).T
+    control = beta(prior_alpha + results.loc['control', 'converted'], prior_beta + results.loc['control', 'sampleSize'] - results.loc['control', 'converted'])
+    test = beta(prior_alpha + results.loc['test', 'converted'], prior_beta + results.loc['test', 'sampleSize'] - results.loc['test', 'converted'])
 
-    x = np.linspace(0, 1, 1000)
+    results_summary = results.copy()
+    results_summary['conversionRate'] = round(results_summary['conversionRate'], 3) * 100 
+    results_summary['conversionRate'] = results_summary['conversionRate'].astype(object)
+    results_summary.loc['control', 'conversionRate'] = str(results_summary.loc['control', 'conversionRate']) + " %"
+    results_summary.loc['test', 'conversionRate'] = str(results_summary.loc['test', 'conversionRate']) + " %"
 
-    st.markdown("### Prior Belief Distribution")
-    st.dataframe(prior_summary)
+    st.markdown("### Posterior Distribution")
+    st.dataframe(results_summary)
     with st.container():
-        plot = prior_plot(x, prior.pdf(x))
+        plot = posterior_plot(x, control.pdf(x), test.pdf(x))
         st.plotly_chart(plot)
 
-
-    # Let's bring up experiment result
-
-    posterior_file = st.file_uploader("Upload Posterior CSV", type=".csv")
-    use_posterior_example_file = st.checkbox(
-        "Use example file", False, help="Use in-built example posterior file to demo the app"
-    )
-
-    if use_posterior_example_file:
-        posterior_file = "./data/experiment_data.csv"
-        ab_default = ['group']
-        result_default = ['converted']
-
-    if posterior_file:
-        experiment_data = pd.read_csv(posterior_file)
-
-        st.markdown("### Experiment Result Data preview")
-        st.dataframe(experiment_data.head())
-
-        st.markdown("### Select columns for analysis")
-
-        with st.form(key="my_form2"):
-            ab = st.multiselect(
-                "A/B column",
-                options=experiment_data.columns,
-                help="Select which column refers to your control/treatment testing labels.",
-                default=ab_default,
-            )
-            if ab:
-                control = experiment_data[ab[0]].unique()[0]
-                treatment = experiment_data[ab[0]].unique()[1]
-                decide = st.radio(
-                    f"Is *{treatment}* Group B?",
-                    options=["Yes", "No"],
-                    help="Select yes if this is group B (or the treatment group) from your test.",
-                )
-                if decide == "No":
-                    control, treatment = treatment, control
-                visitors_a = experiment_data[ab[0]].value_counts()[control]
-                visitors_b = experiment_data[ab[0]].value_counts()[treatment]
-
-            result = st.multiselect(
-                "Result column",
-                options=experiment_data.columns,
-                help="Select which column shows the result of the test.",
-                default=result_default,
-            )
-
-            if result:
-                conversions_a = (
-                    experiment_data[[ab[0], result[0]]].groupby(ab[0]).agg("sum")[result[0]][control]
-                )
-                conversions_b = (
-                    experiment_data[[ab[0], result[0]]].groupby(ab[0]).agg("sum")[result[0]][treatment]
-                )
-
-            submit_button2 = st.form_submit_button(label="Submit")
-
-        if not ab or not result:
-            st.warning("Please select both an **A/B column** and a **Result column**.")
-            st.stop()
+    # Now let's plot heatmap
+    
+    joint_dist_for_plot = []
+    for i in np.linspace(0.26,0.42,161):
+        for j in np.linspace(0.26,0.42,161):
+            joint_dist_for_plot.append([i, j, control.pdf(i)*test.pdf(j)])
+    joint_dist_for_plot = pd.DataFrame(joint_dist_for_plot)
+    joint_dist_for_plot.rename({0: 'control_cr', 1: 'test_cr', 2: 'joint_density'}, axis=1, inplace=True)
+    tick_locations = range(0, 160, 10)
+    tick_labels = [round(0.26 + i*0.01, 2) for i in range(16)]
+    heatmap_df = pd.pivot_table(joint_dist_for_plot, values='joint_density', index='test_cr', columns='control_cr')
 
 
-        name = (
-        "../backup/experiment_data.csv" if isinstance(posterior_file, str) else posterior_file.name
-        )
+    st.markdown("### Heatmap")
+    with st.container():
+        plot = heatmap_plot(heatmap_df)
+        st.plotly_chart(plot)
 
-        results = experiment_data.groupby('group').agg({'userId': pd.Series.nunique, 'converted': sum})
-        results.rename({'userId': 'sampleSize'}, axis=1, inplace=True)
-        results['conversionRate'] = results['converted']/results['sampleSize']
-
-        control = beta(prior_alpha + results.loc['control', 'converted'], prior_beta + results.loc['control', 'sampleSize'] - results.loc['control', 'converted'])
-        treatment = beta(prior_alpha + results.loc['treatment', 'converted'], prior_beta + results.loc['treatment', 'sampleSize'] - results.loc['treatment', 'converted'])
-
-        results_summary = results.copy()
-        results_summary['conversionRate'] = round(results_summary['conversionRate'], 3) * 100 
-        results_summary['conversionRate'] = results_summary['conversionRate'].astype(object)
-        results_summary.loc['control', 'conversionRate'] = str(results_summary.loc['control', 'conversionRate']) + " %"
-        results_summary.loc['treatment', 'conversionRate'] = str(results_summary.loc['treatment', 'conversionRate']) + " %"
-
-        st.markdown("### Posterior Distribution")
-        st.dataframe(results_summary)
-        with st.container():
-            plot = posterior_plot(x, control.pdf(x), treatment.pdf(x))
-            st.plotly_chart(plot)
-
-        # Now let's plot heatmap
-        
-        joint_dist_for_plot = []
-        for i in np.linspace(0.26,0.42,161):
-            for j in np.linspace(0.26,0.42,161):
-                joint_dist_for_plot.append([i, j, control.pdf(i)*treatment.pdf(j)])
-        joint_dist_for_plot = pd.DataFrame(joint_dist_for_plot)
-        joint_dist_for_plot.rename({0: 'control_cr', 1: 'treatment_cr', 2: 'joint_density'}, axis=1, inplace=True)
-        tick_locations = range(0, 160, 10)
-        tick_labels = [round(0.26 + i*0.01, 2) for i in range(16)]
-        heatmap_df = pd.pivot_table(joint_dist_for_plot, values='joint_density', index='treatment_cr', columns='control_cr')
+    decimal.getcontext().prec = 4
+    control_simulation = np.random.beta(prior_alpha + results.loc['control', 'converted'], prior_beta + results.loc['control', 'sampleSize'] - results.loc['control', 'converted'], size=10000)
+    test_simulation = np.random.beta(prior_alpha + results.loc['test', 'converted'], prior_beta + results.loc['test', 'sampleSize'] - results.loc['test', 'converted'], size=10000)
+    test_won = [i <= j for i,j in zip(control_simulation, test_simulation)]
+    chance_of_beating_control = np.mean(test_won)
+    with st.container():
+        st.markdown(f'### Chance of test beating control is {decimal.getcontext().create_decimal(chance_of_beating_control)}')
 
 
-        st.markdown("### Heatmap")
-        with st.container():
-            plot = heatmap_plot(heatmap_df)
-            st.plotly_chart(plot)
-
-
-
-
-
-
-
-            decimal.getcontext().prec = 4
-            control_simulation = np.random.beta(prior_alpha + results.loc['control', 'converted'], prior_beta + results.loc['control', 'sampleSize'] - results.loc['control', 'converted'], size=10000)
-            treatment_simulation = np.random.beta(prior_alpha + results.loc['treatment', 'converted'], prior_beta + results.loc['treatment', 'sampleSize'] - results.loc['treatment', 'converted'], size=10000)
-            treatment_won = [i <= j for i,j in zip(control_simulation, treatment_simulation)]
-            chance_of_beating_control = np.mean(treatment_won)
-            print(f'Chance of treatment beating control is {decimal.getcontext().create_decimal(chance_of_beating_control)}')
-
-
-# bolttech_colors = {
-# 'white': '#FFFFFF',
-# 'black': '#000000',
-# 'blue_dark': '#160E45',
-# 'cyan_dark': '#00B9C7',
-# 'cyan_medium': '#66D6DD',
-# 'cyan_light': '#CCF1F3',
-# 'yellow_dark': '#E2D900',
-# 'yellow_light': '#F9F7CC',
-# 'grey_dark': '#746F95',
-# 'grey_light': '#D1CFDC'
-# }
 
 # two_cols = st.checkbox("2 columns?", False)
 # if two_cols:
@@ -236,12 +170,6 @@ if prior_file:
 #             st.plotly_chart(plot)
 
 # else:
-    
-
-
-
-
-    
 
     # st.markdown("### Sample Size")
     # nA = st.slider('Sample Size - Control Group', 1, 1000, value = 800)
@@ -253,14 +181,6 @@ if prior_file:
     # with st.container():
     #     plot = intro_plot(pA, pB, nA, nB, alpha)
     #     st.plotly_chart(plot)
-
-
-
-
-
-
-
-
 
 
 # # User choose type
