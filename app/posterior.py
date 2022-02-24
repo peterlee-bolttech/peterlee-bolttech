@@ -23,7 +23,7 @@ bolttech_colors = {
 }
 
 
-def posterior_plot(x, y1, y2):
+def posterior_plot(x, y1, y2, lower_bound, upper_bound):
 
     fig = go.Figure()
 
@@ -41,7 +41,7 @@ def posterior_plot(x, y1, y2):
             x = x,
             y = y2,
             line_color = bolttech_colors['blue_dark'],
-            name = 'Treatment'
+            name = 'Test'
         )
     )
 
@@ -50,11 +50,15 @@ def posterior_plot(x, y1, y2):
         height = 600,
         title="Conversion Probability",
         xaxis_title="Conversion Rate",
+<<<<<<< HEAD
         # yaxis_title="Density",
+=======
+>>>>>>> c57da23 (Merge branch 'develop' of https://github.com/peterlee-bolttech/peterlee-bolttech into develop)
         showlegend= True,
-    #     yaxis_range=[-4,4],
-        xaxis_range=[0.26, 0.42]
+        xaxis_range=[lower_bound, upper_bound]
     )
+    
+    fig.update_yaxes(visible = False)
 
     fig.update_yaxes(visible = False)
 

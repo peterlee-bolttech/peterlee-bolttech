@@ -23,7 +23,7 @@ bolttech_colors = {
 }
 
 
-def heatmap_plot(df_matrix, title="Control/Treatment group conversion matrix"):
+def heatmap_plot(df_matrix, title=""):
     """Generate heatmap figure from NxN matrix.
 
     Args:
@@ -39,16 +39,34 @@ def heatmap_plot(df_matrix, title="Control/Treatment group conversion matrix"):
         x=df_matrix.columns,
         y=df_matrix.index,
         hovertemplate='%{y} ---> %{x}<extra>%{z}</extra>',
-        colorscale= 'blues'
+        colorscale= 'darkmint'
     )
+
+    lower_bound = df_matrix.columns.min()
+    upper_bound = df_matrix.columns.max()
     
     data = [trace]
     layout = {
         'title': {'text': title},
-        'xaxis': {'title': "control_cr"},
-        'yaxis': {'title': "treatment_cr"}
+        'xaxis': {'title': "Control Group Conversion Rate"},
+        'yaxis': {'title': "Test Group Conversion Rate"}
     }
 
     fig = go.Figure(data=data, layout=layout)
+
+    fig.update_layout(
+            width = 550,
+            height = 500,
+            xaxis_range=[lower_bound, upper_bound],
+            yaxis_range=[lower_bound, upper_bound],
+            margin=dict(l=0, r=0, t=0, b=0)
+)
+
+    fig.add_trace(
+        go.Line(
+            x = np.linspace(lower_bound, upper_bound, 100),
+            y = np.linspace(lower_bound, upper_bound, 100),
+            line_color = bolttech_colors['blue_dark'])
+            )
 
     return fig 
