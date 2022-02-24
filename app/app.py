@@ -46,8 +46,10 @@ use_posterior_example_file = st.checkbox(
 
 if use_posterior_example_file:
     posterior_file = "./data/experiment_data.csv"
-    ab_default = ['group']
-    result_default = ['converted']
+
+ab_default = None
+result_default = None
+
 
 if posterior_file:
     experiment_data = pd.read_csv(posterior_file)
@@ -143,6 +145,7 @@ if posterior_file:
     with st.container():
         plot = heatmap_plot(heatmap_df)
         st.plotly_chart(plot)
+        
 
     decimal.getcontext().prec = 4
     control_simulation = np.random.beta(prior_alpha + results.loc['control', 'converted'], prior_beta + results.loc['control', 'sampleSize'] - results.loc['control', 'converted'], size=10000)
@@ -151,7 +154,6 @@ if posterior_file:
     chance_of_beating_control = np.mean(test_won)
     with st.container():
         st.markdown(f'### Chance of test beating control is {decimal.getcontext().create_decimal(chance_of_beating_control)}')
-
 
 
 # two_cols = st.checkbox("2 columns?", False)
