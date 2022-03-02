@@ -1,12 +1,5 @@
-import streamlit as st
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.express as px
 import plotly.graph_objs as go
-import scipy.stats as scs
-# from scipy.stats import beta
 
 
 bolttech_colors = {
@@ -63,7 +56,7 @@ def heatmap_plot(df_matrix, title=""):
 )
 
     fig.add_trace(
-        go.Line(
+        go.Scatter(
             x = np.linspace(lower_bound, upper_bound, 100),
             y = np.linspace(lower_bound, upper_bound, 100),
             line_color = bolttech_colors['blue_dark'])

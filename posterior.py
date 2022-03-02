@@ -1,13 +1,6 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.express as px
+from __future__ import annotations
 import plotly.graph_objs as go
-import scipy.stats as scs
-# from scipy.stats import beta
-
+import numpy as np
 
 bolttech_colors = {
 'white': '#FFFFFF',
@@ -22,13 +15,12 @@ bolttech_colors = {
 'grey_light': '#D1CFDC'
 }
 
-
 def posterior_plot(x, y1, y2, lower_bound, upper_bound):
 
     fig = go.Figure()
 
     fig.add_trace(
-        go.Line(
+        go.Scatter(
             x = x,
             y = y1,
             line_color = bolttech_colors['cyan_dark'],
@@ -37,11 +29,29 @@ def posterior_plot(x, y1, y2, lower_bound, upper_bound):
     )
 
     fig.add_trace(
-        go.Line(
+        go.Scatter(
             x = x,
             y = y2,
             line_color = bolttech_colors['blue_dark'],
             name = 'Test'
+        )
+    )
+
+    # where test > control
+    vline = np.where(y1 < y2)[0][0]
+    fig.add_vline(x=x[vline], line_width=2, line_dash="dash", line_color="grey")
+
+    y3 = y2.copy()
+    y3[:vline] = 0
+
+    fig.add_trace(
+        go.Scatter(
+            x = x,
+            y = y3,
+            line_color = bolttech_colors['blue_dark'],
+            name = 'Test > Control',
+            fill = 'toself',
+            line_width = 0.01
         )
     )
 
@@ -50,15 +60,12 @@ def posterior_plot(x, y1, y2, lower_bound, upper_bound):
         height = 600,
         title="Conversion Probability",
         xaxis_title="Conversion Rate",
-<<<<<<< HEAD
-        # yaxis_title="Density",
-=======
->>>>>>> c57da23 (Merge branch 'develop' of https://github.com/peterlee-bolttech/peterlee-bolttech into develop)
         showlegend= True,
-        xaxis_range=[lower_bound, upper_bound]
+        xaxis_range=[lower_bound, upper_bound],
     )
-    
-    fig.update_yaxes(visible = False)
+        
+    # fig.add_annotation(align = 'right', showarrow=False, x = (lower_bound + upper_bound)/2, y = y2.max() * 0.99,
+    # text = 'Probability of upperhand group being better than the rest is {0:.1f} %'.format(y3.sum()/len(x) * 100))
 
     fig.update_yaxes(visible = False)
 

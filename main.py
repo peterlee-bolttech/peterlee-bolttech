@@ -1,7 +1,10 @@
 from ctypes import alignment
 import streamlit as st
+import warnings
 from storeApp import runStoreTest
 from clickApp import runClickTest
+
+warnings.filterwarnings('ignore')
 
 # can only set this once, first thing to set
 st.set_page_config(layout="centered") # or 'wide'
