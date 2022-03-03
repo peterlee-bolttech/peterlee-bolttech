@@ -29,7 +29,8 @@ def runVisitorTest():
     st.write("")
     st.write("")
     st.markdown("##### Example")
-    image = Image.open('./image/visitor_based.png')
+    imgLocation = Path(__file__).parents[0] / 'image/visitor_based.png'
+    image = Image.open(imgLocation)
     st.image(image)
     # st.image('./image/visitor_based.png')
 

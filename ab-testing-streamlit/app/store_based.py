@@ -30,7 +30,8 @@ def runStoreTest():
     st.write("")
     st.write("")
     st.markdown("##### Example")
-    image = Image.open('./image/store_based.png')
+    imgLocation = Path(__file__).parents[0] / 'image/store_based.png'
+    image = Image.open(imgLocation)
     st.image(image)
 
     st.write("")
