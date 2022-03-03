@@ -1,19 +1,29 @@
-### Hi there 👋
+# README #
 
-backup
+This README would normally document whatever steps are necessary to get your application up and running.
 
-Test 20220222 - 2
-<!--
-**peterlee-bolttech/peterlee-bolttech** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+### What is this repository for? ###
 
-Here are some ideas to get you started:
+* Quick summary
+* Version
+* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+### How do I get set up? ###
+
+* Summary of set up
+* Configuration
+* Dependencies
+* Database configuration
+* How to run tests
+* Deployment instructions
+
+### Contribution guidelines ###
+
+* Writing tests
+* Code review
+* Other guidelines
+
+### Who do I talk to? ###
+
+* Repo owner or admin
+* Other community or team contact
