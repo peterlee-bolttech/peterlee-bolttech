@@ -5,6 +5,9 @@ from scipy.stats import beta
 from testResult import testResult
 from heatmapResult import heatmapResult
 from errorMsg import errorMsg
+from pathlib import Path
+from PIL import Image
+
 
 def runStoreTest():
     test_record = st.file_uploader("Upload Sales Record CSV", type=".csv")
@@ -27,13 +30,15 @@ def runStoreTest():
     st.write("")
     st.write("")
     st.markdown("##### Example")
-    st.image('./image/store_based.png')
+    image = Image.open('./image/store_based.png')
+    st.image(image)
 
     st.write("")
     st.markdown("###### *Please tick 'Use example file' to see example format for your reference.")
 
     if use_example:
-        test_record = "./data/store_based.csv"
+        csvLocation = Path(__file__).parents[0] / 'data/store_based.csv'
+        test_record = csvLocation
 
     if test_record:
         test_data = pd.read_csv(test_record)
