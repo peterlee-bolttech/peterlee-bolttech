@@ -27,13 +27,13 @@ def runStoreTest():
     st.write("")
     st.write("")
     st.markdown("##### Example")
-    st.image('../image/store_based.png')
+    st.image('./image/store_based.png')
 
     st.write("")
     st.markdown("###### *Please tick 'Use example file' to see example format for your reference.")
 
     if use_example:
-        test_record = "../data/store_based.csv"
+        test_record = "./data/store_based.csv"
 
     if test_record:
         test_data = pd.read_csv(test_record)
